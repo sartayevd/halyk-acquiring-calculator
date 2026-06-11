@@ -150,24 +150,32 @@ function Arena({ light }) {
   const [to, setTo] = useState(80);
   const [ks, setKs] = useState(60);
   const [qr, setQr] = useState(30);
-  const [kp, setKp] = useState(2.0);
+  // Kaspi тарифы
+  const [kaspiOwnPos,   setKaspiOwnPos]   = useState(1.5);
+  const [kaspiOtherPos, setKaspiOtherPos] = useState(2.5);
+  const [kaspiOwnSh,    setKaspiOwnSh]    = useState(60);
   const [kq, setKq] = useState(0.5);
-  const [hp, setHp] = useState(1.0);
+  // Halyk тарифы
+  const [halykOwnPos,   setHalykOwnPos]   = useState(0.5);
+  const [halykOtherPos, setHalykOtherPos] = useState(1.0);
+  const [halykOwnSh,    setHalykOwnSh]    = useState(20);
   const [hq, setHq] = useState(0.5);
 
   const barR = useRef(null), mapR = useRef(null);
 
   const ps = (100 - qr) / 100, qd = qr / 100, T = to * 1e6;
-  const KC = T * (ps * kp/100 + qd * kq/100);
-  const HC = T * (ps * hp/100 + qd * hq/100);
+  const kaspiBlendedPos = kaspiOwnSh/100 * kaspiOwnPos + (1-kaspiOwnSh/100) * kaspiOtherPos;
+  const halykBlendedPos = halykOwnSh/100 * halykOwnPos + (1-halykOwnSh/100) * halykOtherPos;
+  const KC = T * (ps * kaspiBlendedPos/100 + qd * kq/100);
+  const HC = T * (ps * halykBlendedPos/100 + qd * hq/100);
   const sav = KC - HC, savY = sav * 12;
   const wins = sav > 0;
-  const keR = ps * kp + qd * kq, heR = ps * hp + qd * hq;
+  const keR = ps * kaspiBlendedPos + qd * kq, heR = ps * halykBlendedPos + qd * hq;
 
   const SEGS = [1e6,5e6,10e6,50e6,100e6,500e6];
   const SLBL = ['1 млн','5 млн','10 млн','50 млн','100 млн','500 млн'];
-  const segK = SEGS.map(s => s*(ps*kp/100+qd*kq/100)/1000);
-  const segH = SEGS.map(s => s*(ps*hp/100+qd*hq/100)/1000);
+  const segK = SEGS.map(s => s*(ps*kaspiBlendedPos/100+qd*kq/100)/1000);
+  const segH = SEGS.map(s => s*(ps*halykBlendedPos/100+qd*hq/100)/1000);
 
   useChart(barR, () => ({
     type:'bar',
@@ -224,13 +232,17 @@ function Arena({ light }) {
             <div className="tgrid">
               <div className="tg" style={{borderLeft:'3px solid var(--red)'}}>
                 <div className="tg-lbl red">Kaspi</div>
-                <Sl label="POS" value={kp} min={0.1} max={5} step={0.05} onChange={setKp} fmt={p2} />
-                <Sl label="QR"  value={kq} min={0}   max={3} step={0.05} onChange={setKq} fmt={p2} />
+                <Sl label="Свои карты (POS)" value={kaspiOwnPos}   min={0.1} max={5} step={0.05} onChange={setKaspiOwnPos}   fmt={p2} />
+                <Sl label="Чужие карты (POS)" value={kaspiOtherPos} min={0.1} max={5} step={0.05} onChange={setKaspiOtherPos} fmt={p2} />
+                <Sl label="Доля своих карт"  value={kaspiOwnSh}    min={0}   max={100}             onChange={setKaspiOwnSh}    fmt={v=>v+'%'} />
+                <Sl label="QR"               value={kq}            min={0}   max={3}  step={0.05} onChange={setKq}            fmt={p2} />
               </div>
               <div className="tg" style={{borderLeft:'3px solid var(--green)'}}>
                 <div className="tg-lbl green">Halyk</div>
-                <Sl label="POS" value={hp} min={0.1} max={5} step={0.05} onChange={setHp} fmt={p2} />
-                <Sl label="QR"  value={hq} min={0}   max={3} step={0.05} onChange={setHq} fmt={p2} />
+                <Sl label="Свои карты (POS)" value={halykOwnPos}   min={0.1} max={5} step={0.05} onChange={setHalykOwnPos}   fmt={p2} />
+                <Sl label="Чужие карты (POS)" value={halykOtherPos} min={0.1} max={5} step={0.05} onChange={setHalykOtherPos} fmt={p2} />
+                <Sl label="Доля своих карт"  value={halykOwnSh}    min={0}   max={100}             onChange={setHalykOwnSh}    fmt={v=>v+'%'} />
+                <Sl label="QR"               value={hq}            min={0}   max={3}  step={0.05} onChange={setHq}            fmt={p2} />
               </div>
             </div>
           </div>
@@ -402,18 +414,24 @@ function Scenarios({ light }) {
 function Switching({ light }) {
   const [to, setTo] = useState(30);
   const [qr, setQr] = useState(30);
-  const [kp, setKp] = useState(2.0);
+  const [kaspiOwnPos,   setKaspiOwnPos]   = useState(1.5);
+  const [kaspiOtherPos, setKaspiOtherPos] = useState(2.5);
+  const [kaspiOwnSh,    setKaspiOwnSh]    = useState(60);
   const [kq, setKq] = useState(0.5);
-  const [hp, setHp] = useState(1.0);
+  const [halykOwnPos,   setHalykOwnPos]   = useState(0.5);
+  const [halykOtherPos, setHalykOtherPos] = useState(1.0);
+  const [halykOwnSh,    setHalykOwnSh]    = useState(20);
   const [hq, setHq] = useState(0.5);
 
   const ps = (100-qr)/100, qd = qr/100, T = to*1e6;
-  const KC = T*(ps*kp/100+qd*kq/100);
-  const HC = T*(ps*hp/100+qd*hq/100);
+  const kaspiBlendedPos = kaspiOwnSh/100 * kaspiOwnPos + (1-kaspiOwnSh/100) * kaspiOtherPos;
+  const halykBlendedPos = halykOwnSh/100 * halykOwnPos + (1-halykOwnSh/100) * halykOtherPos;
+  const KC = T*(ps*kaspiBlendedPos/100+qd*kq/100);
+  const HC = T*(ps*halykBlendedPos/100+qd*hq/100);
   const sav = KC-HC, wins = sav>0;
 
-  const keR = ps*kp/100+qd*kq/100;
-  const heR = ps*hp/100+qd*hq/100;
+  const keR = ps*kaspiBlendedPos/100+qd*kq/100;
+  const heR = ps*halykBlendedPos/100+qd*hq/100;
   const gap = keR - heR;
 
   // Indifference: halyk_eff = ps*x/100 + qd*kq/100 => x = (heR - qd*kq/100)/ps*100
@@ -427,8 +445,11 @@ function Switching({ light }) {
     COLS.map(tc => {
       const rps = rks/100, rqd = 1-rps;
       const tv = tc*1e6;
-      const kc = tv*(rps*kp/100+rqd*kq/100);
-      const hc = tv*(rps*hp/100+rqd*hq/100);
+      // используем blended-ставки с той же долей своих карт что в слайдере
+      const kBl = kaspiOwnSh/100 * kaspiOwnPos + (1-kaspiOwnSh/100) * kaspiOtherPos;
+      const hBl = halykOwnSh/100 * halykOwnPos + (1-halykOwnSh/100) * halykOtherPos;
+      const kc = tv*(rps*kBl/100+rqd*kq/100);
+      const hc = tv*(rps*hBl/100+rqd*hq/100);
       return (kc-hc)/1000;
     })
   );
@@ -458,13 +479,17 @@ function Switching({ light }) {
             <div className="tgrid">
               <div className="tg" style={{borderLeft:'3px solid var(--red)'}}>
                 <div className="tg-lbl red">Kaspi</div>
-                <Sl label="POS" value={kp} min={0.1} max={5} step={0.05} onChange={setKp} fmt={p2} />
-                <Sl label="QR"  value={kq} min={0}   max={3} step={0.05} onChange={setKq} fmt={p2} />
+                <Sl label="Свои карты (POS)" value={kaspiOwnPos}   min={0.1} max={5} step={0.05} onChange={setKaspiOwnPos}   fmt={p2} />
+                <Sl label="Чужие карты (POS)" value={kaspiOtherPos} min={0.1} max={5} step={0.05} onChange={setKaspiOtherPos} fmt={p2} />
+                <Sl label="Доля своих карт"  value={kaspiOwnSh}    min={0}   max={100}             onChange={setKaspiOwnSh}    fmt={v=>v+'%'} />
+                <Sl label="QR"               value={kq}            min={0}   max={3}  step={0.05} onChange={setKq}            fmt={p2} />
               </div>
               <div className="tg" style={{borderLeft:'3px solid var(--green)'}}>
                 <div className="tg-lbl green">Halyk</div>
-                <Sl label="POS" value={hp} min={0.1} max={5} step={0.05} onChange={setHp} fmt={p2} />
-                <Sl label="QR"  value={hq} min={0}   max={3} step={0.05} onChange={setHq} fmt={p2} />
+                <Sl label="Свои карты (POS)" value={halykOwnPos}   min={0.1} max={5} step={0.05} onChange={setHalykOwnPos}   fmt={p2} />
+                <Sl label="Чужие карты (POS)" value={halykOtherPos} min={0.1} max={5} step={0.05} onChange={setHalykOtherPos} fmt={p2} />
+                <Sl label="Доля своих карт"  value={halykOwnSh}    min={0}   max={100}             onChange={setHalykOwnSh}    fmt={v=>v+'%'} />
+                <Sl label="QR"               value={hq}            min={0}   max={3}  step={0.05} onChange={setHq}            fmt={p2} />
               </div>
             </div>
           </div>
