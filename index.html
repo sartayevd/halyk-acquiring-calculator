@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор тарифов эквайринга — Halyk Bank</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0F1117;--surface:#1A1D27;--surface2:#222536;--border:#2D3148;
+  --text:#E8EAF0;--text2:#8B8FA8;
+  --green:#00B85C;--green-soft:rgba(0,184,92,.12);
+  --red:#FF3B4E;--red-soft:rgba(255,59,78,.12);
+  --amber:#F59E0B;--blue:#3B82F6;
+  --radius:12px;
+}
+[data-light]{
+  --bg:#F0F2F8;--surface:#fff;--surface2:#F5F7FF;--border:#DDE1F0;
+  --text:#1A1D27;--text2:#6B7080;
+  --green-soft:rgba(0,184,92,.1);--red-soft:rgba(255,59,78,.1);
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;line-height:1.5}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:16px;height:58px;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--green);white-space:nowrap}
+.logo-box{width:30px;height:30px;background:var(--green);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:15px}
+.tabs{display:flex;gap:2px;flex:1;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:transparent;transition:all .15s;white-space:nowrap}
+.tab:hover{background:var(--surface2);color:var(--text)}
+.tab.active{background:var(--green-soft);color:var(--green)}
+.theme-btn{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:14px;flex-shrink:0}
+.main{max-width:1300px;margin:0 auto;padding:24px}
+.g2{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start}
+.g2r{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:860px){.g2,.g2r{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.ctitle{font-size:11.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+.stitle{font-size:22px;font-weight:700;margin-bottom:5px}
+.ssub{font-size:13.5px;color:var(--text2);margin-bottom:22px}
+.sl-group{margin-bottom:14px}
+.sl-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.sl-lbl{font-size:12.5px;color:var(--text2)}
+.sl-val{font-size:13px;font-weight:700;color:var(--text);min-width:90px;text-align:right}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--green);cursor:pointer;box-shadow:0 0 0 3px var(--green-soft)}
+.mcard{background:var(--surface2);border-radius:10px;padding:12px}
+.mcard .lbl{font-size:11px;color:var(--text2);margin-bottom:3px}
+.mcard .val{font-size:18px;font-weight:700;line-height:1.2}
+.mrow{display:flex;gap:10px;flex-wrap:wrap}
+.mrow .mcard{flex:1;min-width:100px}
+.green{color:var(--green)}.red{color:var(--red)}.amber{color:var(--amber)}
+.verdict{border-radius:10px;padding:13px;margin-top:10px}
+.verdict-green{background:var(--green-soft);border:1px solid rgba(0,184,92,.25);color:var(--green)}
+.verdict-red{background:var(--red-soft);border:1px solid rgba(255,59,78,.25);color:var(--red)}
+.verdict-amber{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--amber)}
+.vt{font-size:13px;font-weight:700;margin-bottom:3px}
+.vb{font-size:12px;opacity:.85}
+.cw{position:relative;height:220px}
+.warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--amber);margin-top:8px}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tg{background:var(--surface2);border-radius:10px;padding:12px}
+.tg-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.divider{height:1px;background:var(--border);margin:14px 0}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:600}
+.bg{background:var(--green-soft);color:var(--green)}
+.br{background:var(--red-soft);color:var(--red)}
+.info-box{background:var(--surface2);border-radius:8px;padding:10px 13px;font-size:12.5px;margin-top:8px}
+.sc-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.sc-table th{text-align:left;padding:9px 11px;color:var(--text2);font-weight:500;border-bottom:1px solid var(--border);font-size:11.5px}
+.sc-table td{padding:9px 11px;border-bottom:1px solid rgba(45,49,72,.5)}
+.sc-table tr.sel td{background:var(--green-soft)}
+.sc-table tr:hover td{background:var(--surface2);cursor:pointer}
+.sc-table tr.sel:hover td{background:var(--green-soft)}
+.hm{overflow-x:auto}
+.hm table{border-collapse:separate;border-spacing:3px;width:100%}
+.hm th{font-size:10.5px;color:var(--text2);font-weight:500;padding:3px 5px;text-align:center;white-space:nowrap}
+.hm td{border-radius:5px;padding:7px 3px;text-align:center;font-size:11px;font-weight:700;min-width:58px;position:relative;cursor:default;transition:transform .1s}
+.hm td:hover{transform:scale(1.06);z-index:1}
+.star{position:absolute;top:1px;right:3px;font-size:8px}
+footer{text-align:center;padding:20px;font-size:11px;color:var(--text2);border-top:1px solid var(--border);margin-top:40px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const fmtN = n => isFinite(n) ? Math.round(n).toLocaleString('ru-RU') : '—';
+const fmtM = n => {
+  const a = Math.abs(n);
+  if (a >= 1e9) return (n/1e9).toFixed(3) + ' млрд ₸';
+  if (a >= 1e6) return (n/1e6).toFixed(2) + ' млн ₸';
+  return fmtN(n) + ' ₸';
+};
+const p2 = n => n.toFixed(2) + '%';
+
+const CDEFS = { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } };
+const grd = l => ({ color: l ? '#E5E7EB' : '#2D3148' });
+const tck = l => ({ color: l ? '#6B7080' : '#8B8FA8', font:{ size:10 } });
+
+function Sl({ label, value, min, max, step=1, onChange, fmt: f }) {
+  return (
+    <div className="sl-group">
+      <div className="sl-row">
+        <span className="sl-lbl">{label}</span>
+        <span className="sl-val">{f ? f(value) : value}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={e => onChange(Number(e.target.value))} />
+    </div>
+  );
+}
+
+function MC({ label, value, color }) {
+  return (
+    <div className="mcard">
+      <div className="lbl">{label}</div>
+      <div className={`val ${color||''}`}>{value}</div>
+    </div>
+  );
+}
+
+function Vd({ type, title, body }) {
+  return (
+    <div className={`verdict verdict-${type}`}>
+      <div className="vt">{title}</div>
+      {body && <div className="vb">{body}</div>}
+    </div>
+  );
+}
+
+function useChart(ref, build, deps) {
+  const inst = useRef(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    inst.current?.destroy();
+    inst.current = new Chart(ref.current, build());
+    return () => inst.current?.destroy();
+  }, deps);
+}
+
+/* ══════════════════════════════════════
+   ARENA
+══════════════════════════════════════ */
+function Arena({ light }) {
+  const [to, setTo] = useState(80);
+  const [ks, setKs] = useState(60);
+  const [qr, setQr] = useState(30);
+  const [kp, setKp] = useState(2.0);
+  const [kq, setKq] = useState(0.5);
+  const [hp, setHp] = useState(1.0);
+  const [hq, setHq] = useState(0.5);
+
+  const barR = useRef(null), mapR = useRef(null);
+
+  const ps = (100 - qr) / 100, qd = qr / 100, T = to * 1e6;
+  const KC = T * (ps * kp/100 + qd * kq/100);
+  const HC = T * (ps * hp/100 + qd * hq/100);
+  const sav = KC - HC, savY = sav * 12;
+  const wins = sav > 0;
+  const keR = ps * kp + qd * kq, heR = ps * hp + qd * hq;
+
+  const SEGS = [1e6,5e6,10e6,50e6,100e6,500e6];
+  const SLBL = ['1 млн','5 млн','10 млн','50 млн','100 млн','500 млн'];
+  const segK = SEGS.map(s => s*(ps*kp/100+qd*kq/100)/1000);
+  const segH = SEGS.map(s => s*(ps*hp/100+qd*hq/100)/1000);
+
+  useChart(barR, () => ({
+    type:'bar',
+    data:{
+      labels:['Kaspi','Halyk Bank'],
+      datasets:[{ data:[KC,HC],
+        backgroundColor:['rgba(255,59,78,.3)','rgba(0,184,92,.3)'],
+        borderColor:['#FF3B4E','#00B85C'], borderWidth:2, borderRadius:8 }]
+    },
+    options:{ ...CDEFS,
+      plugins:{ ...CDEFS.plugins, tooltip:{ callbacks:{ label:c=>fmtM(c.raw) } } },
+      scales:{
+        y:{ grid:grd(light), ticks:{ ...tck(light), callback:v=>fmtM(v) } },
+        x:{ grid:{ display:false }, ticks:tck(light) }
+      }
+    }
+  }), [KC,HC,light]);
+
+  useChart(mapR, () => ({
+    type:'bar',
+    data:{
+      labels:SLBL,
+      datasets:[
+        { label:'Kaspi', data:segK, backgroundColor:'rgba(255,59,78,.3)', borderColor:'#FF3B4E', borderWidth:1.5, borderRadius:4 },
+        { label:'Halyk', data:segH, backgroundColor:'rgba(0,184,92,.3)', borderColor:'#00B85C', borderWidth:1.5, borderRadius:4 }
+      ]
+    },
+    options:{ ...CDEFS,
+      plugins:{ legend:{ display:true, labels:{ color:light?'#1A1D27':'#E8EAF0', font:{size:11} } },
+        tooltip:{ callbacks:{ label:c=>fmtN(c.raw*1000)+' ₸/мес.' } } },
+      scales:{
+        y:{ grid:grd(light), ticks:{ ...tck(light), callback:v=>v+' тыс.' } },
+        x:{ grid:{ display:false }, ticks:tck(light) }
+      }
+    }
+  }), [segK.join(), segH.join(), light]);
+
+  return (
+    <div>
+      <div className="stitle">Арена: Kaspi vs Halyk</div>
+      <div className="ssub">Прямое сравнение расходов мерчанта с учётом структуры платёжного потока</div>
+      <div className="g2">
+        <div>
+          <div className="card">
+            <div className="ctitle">Параметры мерчанта</div>
+            <Sl label="Ежемесячный оборот" value={to} min={1} max={5000} step={1} onChange={setTo} fmt={v=>fmtM(v*1e6)} />
+            <Sl label="Доля карт Kaspi Gold" value={ks} min={0} max={100} onChange={setKs} fmt={v=>v+'%'} />
+            <Sl label="Доля QR-платежей" value={qr} min={0} max={80} onChange={setQr} fmt={v=>v+'%'} />
+            {ks > 70 && <div className="warn">⚠ Высокая зависимость от Kaspi-экосистемы (&gt;70%) — риск отказа от перехода</div>}
+          </div>
+          <div style={{height:12}}/>
+          <div className="card">
+            <div className="ctitle">Тарифы</div>
+            <div className="tgrid">
+              <div className="tg" style={{borderLeft:'3px solid var(--red)'}}>
+                <div className="tg-lbl red">Kaspi</div>
+                <Sl label="POS" value={kp} min={0.1} max={5} step={0.05} onChange={setKp} fmt={p2} />
+                <Sl label="QR"  value={kq} min={0}   max={3} step={0.05} onChange={setKq} fmt={p2} />
+              </div>
+              <div className="tg" style={{borderLeft:'3px solid var(--green)'}}>
+                <div className="tg-lbl green">Halyk</div>
+                <Sl label="POS" value={hp} min={0.1} max={5} step={0.05} onChange={setHp} fmt={p2} />
+                <Sl label="QR"  value={hq} min={0}   max={3} step={0.05} onChange={setHq} fmt={p2} />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className="card">
+            <div className="ctitle">Расходы мерчанта в месяц</div>
+            <div className="mrow" style={{marginBottom:12}}>
+              <MC label="Kaspi" value={fmtM(KC)} color="red" />
+              <MC label="Halyk Bank" value={fmtM(HC)} color="green" />
+              <MC label="Экономия/мес." value={fmtM(Math.abs(sav))} color={wins?'green':'red'} />
+              <MC label="Экономия/год"  value={fmtM(Math.abs(savY))} color={wins?'green':'red'} />
+            </div>
+            <div style={{display:'flex',gap:10,marginBottom:14}}>
+              <div style={{flex:1,textAlign:'center',background:'var(--surface2)',borderRadius:8,padding:'8px'}}>
+                <div style={{fontSize:11,color:'var(--text2)'}}>Эффективная ставка Kaspi</div>
+                <div style={{fontSize:20,fontWeight:700,color:'var(--red)'}}>{keR.toFixed(2)}%</div>
+              </div>
+              <div style={{flex:1,textAlign:'center',background:'var(--surface2)',borderRadius:8,padding:'8px'}}>
+                <div style={{fontSize:11,color:'var(--text2)'}}>Эффективная ставка Halyk</div>
+                <div style={{fontSize:20,fontWeight:700,color:'var(--green)'}}>{heR.toFixed(2)}%</div>
+              </div>
+            </div>
+            <div className="cw" style={{height:190}}><canvas ref={barR}/></div>
+            {wins
+              ? <Vd type="green" title={`✓ Halyk выгоднее на ${fmtM(sav)} в месяц`}
+                  body={`Аргумент для переговоров: «При переходе на Halyk вы экономите ${fmtM(sav)}/мес. — это ${fmtM(savY)} в год»`} />
+              : <Vd type="red" title={`✗ Kaspi выгоднее на ${fmtM(Math.abs(sav))} в месяц`}
+                  body="Рассмотрите дополнительные условия или персональный тариф для данного мерчанта" />
+            }
+          </div>
+          <div style={{height:12}}/>
+          <div className="card">
+            <div className="ctitle">Конкурентная карта — расходы по сегментам оборота (тыс. ₸/мес.)</div>
+            <div className="cw" style={{height:210}}><canvas ref={mapR}/></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   SCENARIOS
+══════════════════════════════════════ */
+const DEF_SC = [
+  { name:'Статус-кво',      pos:1.00, qr:0.50, growth:0,  desc:'Текущая позиция' },
+  { name:'Агрессивный',     pos:0.70, qr:0.30, growth:30, desc:'Максимальное давление' },
+  { name:'QR-лидерство',    pos:0.90, qr:0.00, growth:20, desc:'Бесплатный QR' },
+  { name:'Сбалансированный',pos:0.85, qr:0.40, growth:15, desc:'Оптимальный баланс' },
+  { name:'Премиум-сервис',  pos:1.00, qr:0.50, growth:8,  desc:'Ставка на качество' },
+  { name:'Сегментный',      pos:0.80, qr:0.35, growth:22, desc:'Дифференцированный' },
+];
+
+function Scenarios({ light }) {
+  const [sel, setSel] = useState(0);
+  const [mvol, setMvol] = useState(800);
+  const [hsh, setHsh] = useState(25);
+  const [qrs, setQrs] = useState(30);
+  const cR = useRef(null);
+
+  const base = DEF_SC[0], sc = DEF_SC[sel];
+  const hVol = mvol * hsh / 100;
+  const ps = (100 - qrs) / 100, qd = qrs / 100;
+
+  const bRate = ps * base.pos/100 + qd * base.qr/100;
+  const nRate = ps * sc.pos/100 + qd * sc.qr/100;
+
+  const bRev = hVol * bRate;
+  const nRev = hVol * (1 + sc.growth/100) * nRate;
+  const delta = nRev - bRev;
+  const prof = delta >= 0;
+  const be = nRate > 0 ? (bRate/nRate - 1)*100 : 0;
+
+  const gArr = Array.from({length:21},(_,i)=>i*5);
+  const bLine = gArr.map(() => bRev);
+  const nLine = gArr.map(g => hVol * (1+g/100) * nRate);
+
+  useChart(cR, () => ({
+    type:'line',
+    data:{
+      labels: gArr.map(g=>g+'%'),
+      datasets:[
+        { label:'База (Статус-кво)', data:bLine, borderColor:'#8B8FA8', borderDash:[5,5], borderWidth:2, pointRadius:0 },
+        { label:sc.name, data:nLine, borderColor:'#00B85C', borderWidth:2.5, pointRadius:0,
+          fill:{ target:0, above:'rgba(0,184,92,.12)', below:'rgba(255,59,78,.12)' } }
+      ]
+    },
+    options:{ ...CDEFS,
+      plugins:{ legend:{ display:true, labels:{ color:light?'#1A1D27':'#E8EAF0', font:{size:11} } },
+        tooltip:{ callbacks:{ label:c=>c.dataset.label+': '+c.raw.toFixed(2)+' млрд ₸' } } },
+      scales:{
+        x:{ grid:{ display:false }, ticks:{ ...tck(light), maxRotation:0 } },
+        y:{ grid:grd(light), ticks:{ ...tck(light), callback:v=>v.toFixed(1)+' млрд' } }
+      }
+    }
+  }), [sel, mvol, hsh, qrs, light]);
+
+  return (
+    <div>
+      <div className="stitle">Тарифные сценарии</div>
+      <div className="ssub">Сравнение 6 стратегий по финансовому эффекту для банка</div>
+      <div className="g2">
+        <div>
+          <div className="card">
+            <div className="ctitle">Параметры рынка</div>
+            <Sl label="Объём рынка эквайринга" value={mvol} min={100} max={3000} step={50} onChange={setMvol} fmt={v=>v+' млрд ₸/мес.'} />
+            <Sl label="Текущая доля Halyk" value={hsh} min={5} max={60} onChange={setHsh} fmt={v=>v+'%'} />
+            <Sl label="Доля QR в обороте" value={qrs} min={0} max={80} onChange={setQrs} fmt={v=>v+'%'} />
+            <div className="divider"/>
+            <div style={{fontSize:12,color:'var(--text2)'}}>Объём Halyk: <strong style={{color:'var(--text)'}}>{hVol.toFixed(0)} млрд ₸/мес.</strong></div>
+          </div>
+          <div style={{height:12}}/>
+          <div className="card">
+            <div className="ctitle">Результат: {sc.name}</div>
+            <div className="mrow">
+              <MC label="Доход (база)" value={bRev.toFixed(2)+' млрд ₸'} />
+              <MC label="Доход (новый)" value={nRev.toFixed(2)+' млрд ₸'} color={prof?'green':'red'} />
+            </div>
+            <div style={{marginTop:10}}>
+              <MC label="Δ дохода" value={(delta>=0?'+':'')+delta.toFixed(3)+' млрд ₸'} color={prof?'green':'red'} />
+            </div>
+            <div className="info-box" style={{marginTop:8}}>
+              Ожидаемый прирост мерчантов: <strong className={sc.growth>=0?'green':'red'}>+{sc.growth}%</strong>
+              <br/>Точка безубыточности по объёму: <strong className="amber">+{be.toFixed(1)}%</strong>
+            </div>
+            {prof
+              ? <Vd type="green" title="✓ Сценарий окупается"
+                  body={`При приросте +${sc.growth}% доход вырастет на ${delta.toFixed(3)} млрд ₸/мес.`} />
+              : <Vd type="red" title="✗ Сценарий не окупается"
+                  body={`Нужен прирост +${be.toFixed(1)}%, ожидается только +${sc.growth}%`} />
+            }
+          </div>
+        </div>
+        <div>
+          <div className="card">
+            <div className="ctitle">Выберите сценарий</div>
+            <table className="sc-table">
+              <thead><tr>
+                <th>Сценарий</th><th>POS</th><th>QR</th><th>Прирост</th><th>Описание</th>
+              </tr></thead>
+              <tbody>
+                {DEF_SC.map((s,i) => (
+                  <tr key={i} className={sel===i?'sel':''} onClick={()=>setSel(i)}>
+                    <td style={{fontWeight:600}}>{s.name}</td>
+                    <td>{s.pos.toFixed(2)}%</td>
+                    <td>{s.qr.toFixed(2)}%</td>
+                    <td><span className={`badge ${s.growth>=0?'bg':'br'}`}>+{s.growth}%</span></td>
+                    <td style={{color:'var(--text2)',fontSize:11.5}}>{s.desc}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{height:12}}/>
+          <div className="card">
+            <div className="ctitle">Доход при различных уровнях прироста объёма</div>
+            <div className="cw" style={{height:230}}><canvas ref={cR}/></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   SWITCHING POINTS
+══════════════════════════════════════ */
+function Switching({ light }) {
+  const [to, setTo] = useState(30);
+  const [qr, setQr] = useState(30);
+  const [kp, setKp] = useState(2.0);
+  const [kq, setKq] = useState(0.5);
+  const [hp, setHp] = useState(1.0);
+  const [hq, setHq] = useState(0.5);
+
+  const ps = (100-qr)/100, qd = qr/100, T = to*1e6;
+  const KC = T*(ps*kp/100+qd*kq/100);
+  const HC = T*(ps*hp/100+qd*hq/100);
+  const sav = KC-HC, wins = sav>0;
+
+  const keR = ps*kp/100+qd*kq/100;
+  const heR = ps*hp/100+qd*hq/100;
+  const gap = keR - heR;
+
+  // Indifference: halyk_eff = ps*x/100 + qd*kq/100 => x = (heR - qd*kq/100)/ps*100
+  const indiff = ps>0 ? (heR - qd*kq/100)/ps*100 : kp;
+
+  // Heatmap: rows = kaspi-card share (treated as POS%), cols = turnover
+  const ROWS = [20,30,40,50,60,70];
+  const COLS = [1,5,10,30,60,100,200];
+
+  const hmData = ROWS.map(rks =>
+    COLS.map(tc => {
+      const rps = rks/100, rqd = 1-rps;
+      const tv = tc*1e6;
+      const kc = tv*(rps*kp/100+rqd*kq/100);
+      const hc = tv*(rps*hp/100+rqd*hq/100);
+      return (kc-hc)/1000;
+    })
+  );
+  const maxA = Math.max(...hmData.flat().map(Math.abs), 1);
+
+  const cellBg = v => {
+    const r = Math.min(Math.abs(v)/maxA, 1);
+    const a = 0.12 + 0.72*r;
+    return v>0 ? `rgba(0,184,92,${a})` : `rgba(255,59,78,${a})`;
+  };
+  const cellClr = v => v>0?'var(--green)':v<0?'var(--red)':'var(--text2)';
+
+  return (
+    <div>
+      <div className="stitle">Точки переключения</div>
+      <div className="ssub">Пороговый тариф и тепловая карта привлекательности по сегментам</div>
+      <div className="g2">
+        <div>
+          <div className="card">
+            <div className="ctitle">Параметры мерчанта</div>
+            <Sl label="Оборот мерчанта" value={to} min={1} max={200} step={1} onChange={setTo} fmt={v=>v+' млн ₸'} />
+            <Sl label="Доля QR-платежей" value={qr} min={0} max={80} onChange={setQr} fmt={v=>v+'%'} />
+          </div>
+          <div style={{height:12}}/>
+          <div className="card">
+            <div className="ctitle">Тарифы</div>
+            <div className="tgrid">
+              <div className="tg" style={{borderLeft:'3px solid var(--red)'}}>
+                <div className="tg-lbl red">Kaspi</div>
+                <Sl label="POS" value={kp} min={0.1} max={5} step={0.05} onChange={setKp} fmt={p2} />
+                <Sl label="QR"  value={kq} min={0}   max={3} step={0.05} onChange={setKq} fmt={p2} />
+              </div>
+              <div className="tg" style={{borderLeft:'3px solid var(--green)'}}>
+                <div className="tg-lbl green">Halyk</div>
+                <Sl label="POS" value={hp} min={0.1} max={5} step={0.05} onChange={setHp} fmt={p2} />
+                <Sl label="QR"  value={hq} min={0}   max={3} step={0.05} onChange={setHq} fmt={p2} />
+              </div>
+            </div>
+          </div>
+          <div style={{height:12}}/>
+          <div className="card">
+            <div className="ctitle">Анализ переключения</div>
+            <div className="mrow">
+              <MC label="Расходы у Kaspi" value={fmtM(KC)} color="red" />
+              <MC label="Расходы у Halyk" value={fmtM(HC)} color="green" />
+            </div>
+            <div style={{marginTop:10}}>
+              <MC label="Экономия у Halyk" value={fmtM(Math.abs(sav))} color={wins?'green':'red'} />
+            </div>
+            <div className="info-box" style={{marginTop:8}}>
+              Ценовой зазор: <strong className={gap>=0?'green':'red'}>{gap>=0?'-':'+'}{ (Math.abs(gap)*100).toFixed(2)} п.п.</strong>
+              <br/>Точка безразличия (Kaspi POS): <strong className="amber">{indiff.toFixed(2)}%</strong>
+              <div style={{fontSize:11,color:'var(--text2)',marginTop:2}}>При снижении POS Kaspi до этого уровня расходы сравняются</div>
+            </div>
+            {wins
+              ? <Vd type="green" title="✓ Переключение выгодно прямо сейчас"
+                  body={`Экономия: ${fmtM(sav)}/мес. = ${fmtM(sav*12)}/год`} />
+              : <Vd type="red" title="✗ Kaspi пока дешевле"
+                  body={`Kaspi должен поднять тариф выше ${indiff.toFixed(2)}% POS для выгодного переключения`} />
+            }
+          </div>
+        </div>
+        <div className="card">
+          <div className="ctitle">
+            Тепловая карта экономии у Halyk (тыс. ₸/мес.)
+            <span style={{marginLeft:8,fontSize:10.5,color:'var(--text2)'}}>★ приоритет &gt;500 тыс. ₸</span>
+          </div>
+          <div style={{fontSize:11,color:'var(--text2)',marginBottom:10}}>
+            Строки = доля POS/Kaspi-карт · Столбцы = оборот мерчанта
+          </div>
+          <div className="hm">
+            <table>
+              <thead>
+                <tr>
+                  <th style={{textAlign:'left',paddingRight:8}}>POS%\Оборот</th>
+                  {COLS.map(c=><th key={c}>{c}М</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {ROWS.map((rks,ri) => (
+                  <tr key={rks}>
+                    <th style={{textAlign:'left',paddingRight:8,fontWeight:500}}>{rks}%</th>
+                    {COLS.map((c,ci) => {
+                      const val = hmData[ri][ci];
+                      const pri = val > 500;
+                      return (
+                        <td key={c} style={{background:cellBg(val),color:cellClr(val)}}>
+                          {val>=0?'+':''}{Math.round(val)}
+                          {pri && <span className="star">★</span>}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{marginTop:10,fontSize:11,color:'var(--text2)',display:'flex',gap:14,flexWrap:'wrap'}}>
+            <span style={{color:'var(--green)'}}>■ Зелёный — Halyk выгоднее</span>
+            <span style={{color:'var(--red)'}}>■ Красный — Kaspi выгоднее</span>
+            <span>Тарифы обновляются в реальном времени</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   P&L
+══════════════════════════════════════ */
+function PL({ light }) {
+  const [vol, setVol] = useState(200);
+  const [oR, setOR] = useState(1.0);
+  const [nR, setNR] = useState(0.85);
+  const [gro, setGro] = useState(20);
+  const [opc, setOpc] = useState(30);
+
+  const lR = useRef(null), wR = useRef(null);
+
+  const oldRev = vol * oR/100;
+  const newRev = vol * (1+gro/100) * nR/100;
+  const delta = newRev - oldRev, prof = delta>=0;
+  const be = nR>0 ? (oR/nR-1)*100 : 0;
+  const oldNet = oldRev*(1-opc/100), newNet = newRev*(1-opc/100);
+  const rateEff = vol*nR/100 - oldRev;
+  const volEff  = vol*gro/100 * nR/100;
+
+  const gArr = Array.from({length:21},(_,i)=>i*5);
+
+  useChart(lR, () => ({
+    type:'line',
+    data:{
+      labels:gArr.map(g=>g+'%'),
+      datasets:[
+        { label:'База', data:gArr.map(()=>oldRev), borderColor:'#8B8FA8', borderDash:[5,5], borderWidth:2, pointRadius:0 },
+        { label:'Новый тариф', data:gArr.map(g=>vol*(1+g/100)*nR/100), borderColor:'#00B85C', borderWidth:2.5, pointRadius:0,
+          fill:{ target:0, above:'rgba(0,184,92,.12)', below:'rgba(255,59,78,.12)' } }
+      ]
+    },
+    options:{ ...CDEFS,
+      plugins:{ legend:{ display:true, labels:{ color:light?'#1A1D27':'#E8EAF0', font:{size:11} } },
+        tooltip:{ callbacks:{ label:c=>c.dataset.label+': '+c.raw.toFixed(2)+' млрд ₸' } } },
+      scales:{
+        x:{ grid:{ display:false }, ticks:{ ...tck(light), maxRotation:0 } },
+        y:{ grid:grd(light), ticks:{ ...tck(light), callback:v=>v.toFixed(1)+' млрд' } }
+      }
+    }
+  }), [oldRev, nR, gro, light]);
+
+  const wItems = [
+    { label:'База',           lo:0,                  hi:oldRev,   color:'#3B82F6' },
+    { label:'Эффект ставки',  lo:oldRev,             hi:oldRev+rateEff, color:rateEff>=0?'#00B85C':'#FF3B4E' },
+    { label:'Эффект объёма',  lo:oldRev+rateEff,     hi:newRev,   color:'#00B85C' },
+    { label:'Итог',           lo:0,                  hi:newRev,   color:prof?'#00B85C':'#FF3B4E' },
+  ];
+
+  useChart(wR, () => ({
+    type:'bar',
+    data:{
+      labels:wItems.map(w=>w.label),
+      datasets:[{
+        data:wItems.map(w=>[Math.min(w.lo,w.hi),Math.max(w.lo,w.hi)]),
+        backgroundColor:wItems.map(w=>w.color+'88'),
+        borderColor:wItems.map(w=>w.color),
+        borderWidth:2, borderRadius:4,
+      }]
+    },
+    options:{ ...CDEFS,
+      plugins:{ tooltip:{ callbacks:{ label:c=>{ const [a,b]=c.raw; return fmtM((b-a)*1e9)+'/мес.'; } } } },
+      scales:{
+        y:{ grid:grd(light), ticks:{ ...tck(light), callback:v=>v.toFixed(1)+' млрд' } },
+        x:{ grid:{ display:false }, ticks:tck(light) }
+      }
+    }
+  }), [oldRev, newRev, rateEff, volEff, light]);
+
+  return (
+    <div>
+      <div className="stitle">P&L банка</div>
+      <div className="ssub">Финансовая модель влияния тарифного решения на доходы Halyk Bank</div>
+      <div className="g2">
+        <div>
+          <div className="card">
+            <div className="ctitle">Параметры</div>
+            <Sl label="Текущий объём эквайринга Halyk" value={vol} min={10} max={1000} step={10} onChange={setVol} fmt={v=>v+' млрд ₸/мес.'} />
+            <Sl label="Текущая средняя ставка" value={oR} min={0.1} max={5} step={0.05} onChange={setOR} fmt={p2} />
+            <Sl label="Новая средняя ставка"   value={nR} min={0.1} max={5} step={0.05} onChange={setNR} fmt={p2} />
+            <Sl label="Ожидаемый прирост объёма" value={gro} min={0} max={100} onChange={setGro} fmt={v=>'+'+v+'%'} />
+            <Sl label="Операционные затраты" value={opc} min={0} max={80} onChange={setOpc} fmt={v=>v+'% от дохода'} />
+          </div>
+          <div style={{height:12}}/>
+          <div className="card">
+            <div className="ctitle">Финансовый итог</div>
+            <div className="mrow">
+              <MC label="Доход до" value={oldRev.toFixed(3)+' млрд ₸'} />
+              <MC label="Доход после" value={newRev.toFixed(3)+' млрд ₸'} color={prof?'green':'red'} />
+            </div>
+            <div style={{marginTop:10}}>
+              <MC label="Δ дохода" value={(delta>=0?'+':'')+delta.toFixed(3)+' млрд ₸'} color={prof?'green':'red'} />
+            </div>
+            <div style={{marginTop:8,display:'flex',gap:8}}>
+              <div style={{flex:1,background:'var(--surface2)',borderRadius:8,padding:'9px 12px'}}>
+                <div style={{fontSize:11,color:'var(--text2)'}}>Чистый доход до</div>
+                <div style={{fontWeight:700,fontSize:14}}>{oldNet.toFixed(3)} млрд ₸</div>
+              </div>
+              <div style={{flex:1,background:'var(--surface2)',borderRadius:8,padding:'9px 12px'}}>
+                <div style={{fontSize:11,color:'var(--text2)'}}>Чистый доход после</div>
+                <div style={{fontWeight:700,fontSize:14,color:prof?'var(--green)':'var(--red)'}}>{newNet.toFixed(3)} млрд ₸</div>
+              </div>
+            </div>
+            <div className="info-box" style={{marginTop:8}}>
+              Точка безубыточности по объёму: <strong className="amber">+{be.toFixed(1)}%</strong>
+              {!prof && <div style={{fontSize:11,color:'var(--red)',marginTop:3}}>⚠ Нужен +{be.toFixed(1)}%, ожидается только +{gro}%</div>}
+            </div>
+            {prof
+              ? <Vd type="green" title="✓ Положительный P&L"
+                  body={`Снижение ${oR}% → ${nR}% окупается при прогнозируемом росте +${gro}%`} />
+              : <Vd type="red" title="✗ Отрицательный P&L"
+                  body={`Нужен прирост +${be.toFixed(1)}% — выше ожидаемых +${gro}%`} />
+            }
+          </div>
+        </div>
+        <div>
+          <div className="card">
+            <div className="ctitle">Доход при различных уровнях прироста объёма</div>
+            <div className="cw" style={{height:230}}><canvas ref={lR}/></div>
+          </div>
+          <div style={{height:12}}/>
+          <div className="card">
+            <div className="ctitle">Воронка P&L (млрд ₸/мес.)</div>
+            <div className="cw" style={{height:200}}><canvas ref={wR}/></div>
+            <div style={{marginTop:10,display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <div style={{background:'var(--surface2)',borderRadius:8,padding:'9px 12px'}}>
+                <div style={{fontSize:11,color:'var(--text2)'}}>Эффект снижения ставки</div>
+                <div style={{fontWeight:700,color:rateEff>=0?'var(--green)':'var(--red)'}}>{rateEff>=0?'+':''}{rateEff.toFixed(3)} млрд ₸</div>
+              </div>
+              <div style={{background:'var(--surface2)',borderRadius:8,padding:'9px 12px'}}>
+                <div style={{fontSize:11,color:'var(--text2)'}}>Эффект прироста объёма</div>
+                <div style={{fontWeight:700,color:'var(--green)'}}>+{volEff.toFixed(3)} млрд ₸</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   APP
+══════════════════════════════════════ */
+const TABS = [
+  { id:'arena',     label:'⚔️ Арена' },
+  { id:'scenarios', label:'📊 Сценарии' },
+  { id:'switching', label:'🔄 Переключение' },
+  { id:'pl',        label:'💰 P&L банка' },
+];
+
+function App() {
+  const [tab, setTab] = useState('arena');
+  const [light, setLight] = useState(false);
+
+  useEffect(() => {
+    light
+      ? document.documentElement.setAttribute('data-light','')
+      : document.documentElement.removeAttribute('data-light');
+  }, [light]);
+
+  return (
+    <div>
+      <header className="header">
+        <div className="logo">
+          <div className="logo-box">H</div>
+          Калькулятор тарифов эквайринга
+        </div>
+        <div className="tabs">
+          {TABS.map(t => (
+            <button key={t.id} className={`tab ${tab===t.id?'active':''}`} onClick={()=>setTab(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <button className="theme-btn" onClick={()=>setLight(l=>!l)} title="Тема">
+          {light?'🌙':'☀️'}
+        </button>
+      </header>
+      <main className="main">
+        {tab==='arena'     && <Arena     light={light} />}
+        {tab==='scenarios' && <Scenarios light={light} />}
+        {tab==='switching' && <Switching light={light} />}
+        {tab==='pl'        && <PL        light={light} />}
+      </main>
+      <footer>
+        Halyk Bank — Стратегический калькулятор тарифов эквайринга v1.0 · Только для внутреннего использования · Данные тарифов конкурентов требуют ручного обновления
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
